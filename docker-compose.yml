@@ -1,0 +1,39 @@
+services:
+  # Discord Bot Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BOT_PREFIX=${BOT_PREFIX:-!}
+      - BOT_DEV_MODE=${BOT_DEV_MODE:-true}
+      - BOT_DEV_GUILD_ID=${BOT_DEV_GUILD_ID}
+      - DB_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+    networks:
+      - discord-bot-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-discord_bot}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-discord_bot_password}
+      - POSTGRES_DB=${POSTGRES_DB:-discord_bot_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - discord-bot-network
+
+volumes:
+  postgres-data:
+
+networks:
+  discord-bot-network:
+    driver: bridge
